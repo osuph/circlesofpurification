@@ -24,6 +24,8 @@ class BarcodePage extends HTMLElement {
         const video = this.shadowRoot.getElementById("video");
         const value = this.shadowRoot.getElementById("value");
 
+        let abort = null;
+
         const enable = (state) => {
             stop.disabled = state;
             scan.disabled = !state;
@@ -32,17 +34,15 @@ class BarcodePage extends HTMLElement {
         enable(true);
 
         scan.addEventListener('click', async () => {
-            const abort = new AbortController();
-            const signal = abort.signal;
-
-            signal.addEventListener('abort', () => {
+            abort = new AbortController();
+            abort.signal.addEventListener('abort', () => {
                 enable(true);
             });
 
 
             enable(false);
 
-            const result = await detect(video, signal);
+            const result = await detect(video, abort.signal);
 
             if (!result) {
                 enable(true);
@@ -52,7 +52,18 @@ class BarcodePage extends HTMLElement {
             value.innerText = `Result: ${result}`;
 
             enable(true);
+            abort = null;
         });
+
+        stop.addEventListener('click', async () => {
+            if (abort) {
+                abort.abort();
+                abort = null;
+            }
+        });
+
+        BarcodeDetector.getSupportedFormats()
+            .then(formats => console.log(`Supported formats: ${formats.join(", ")}`));
     }
 }
 

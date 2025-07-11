@@ -80,10 +80,11 @@ const APP = {
  * @param {AbortSignal} signal - The abort controller's signal used to cancel detection.
  * @returns {string} The detected QR code value.
  */
-function detect(video, signal) {
-    const stream = navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+async function detect(video, signal) {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = stream;
 
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
     const { promise, resolve, reject } = Promise.withResolvers();
 
     const scan = async () => {
@@ -92,9 +93,9 @@ function detect(video, signal) {
         }
 
         try {
-            const detected = detector.detect(video);
+            const detected = await detector.detect(video);
 
-            if (barcodes.length > 0) {
+            if (detected.length > 0) {
                 stop();
                 resolve(detected[0].rawValue);
             } else {
@@ -114,6 +115,14 @@ function detect(video, signal) {
     };
 
     signal.addEventListener('abort', stop, { once: true });
+
+    await new Promise(resolve => {
+        video.onloadedmetadata = () => {
+            video.play();
+            resolve();
+        }
+    });
+
     requestAnimationFrame(scan);
 
     return promise;
