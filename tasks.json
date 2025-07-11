@@ -1,0 +1,43 @@
+[
+  {
+    "name": "The First Spark",
+    "desc": "Locate the ancient glyph that ignites the journey.",
+    "flag": "purification_01"
+  },
+  {
+    "name": "Echoes of the Past",
+    "desc": "Decipher the whispers from a forgotten era.",
+    "flag": "purification_02"
+  },
+  {
+    "name": "Guardian's Respite",
+    "desc": "Find the sanctuary where the silent protector rests.",
+    "flag": "purification_03"
+  },
+  {
+    "name": "Whispering Woods",
+    "desc": "Uncover the secret hidden deep within the verdant forest.",
+    "flag": "purification_04"
+  },
+  {
+    "name": "Azure Ascent",
+    "desc": "Reach for the skies and touch the cerulean peak.",
+    "flag": "purification_05"
+  },
+  {
+    "name": "Crimson Bloom",
+    "desc": "Discover the vibrant flower that defies the barren lands.",
+    "flag": "purification_06"
+  },
+  {
+    "name": "Starlight Convergence",
+    "desc": "Align the celestial energies under the night sky.",
+    "flag": "purification_07"
+  },
+  {
+    "name": "Final Purity",
+    "desc": "Achieve ultimate clarity and complete your journey!"
+  ,
+    "flag": "purification_08"
+  }
+]

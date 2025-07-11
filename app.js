@@ -36,27 +36,50 @@ const FLAGS = {
 /**
  * The app state.
  */
+/**
+ * The app state.
+ */
 const APP = {
     _flags: parseInt(localStorage.getItem(TOKEN) || '0', 10),
+    _tasks: [], // Initialize as empty, will be loaded asynchronously
 
-    _tasks: [
-        { name: '', desc: '', task: '', flag: 'purification_01' },
-        { name: '', desc: '', task: '', flag: 'purification_02' },
-        { name: '', desc: '', task: '', flag: 'purification_03' },
-        { name: '', desc: '', task: '', flag: 'purification_04' },
-        { name: '', desc: '', task: '', flag: 'purification_05' },
-        { name: '', desc: '', task: '', flag: 'purification_06' },
-        { name: '', desc: '', task: '', flag: 'purification_07' },
-        { name: '', desc: '', task: '', flag: 'purification_08' },
-    ],
+    _tasksLoaded: false, // Property to indicate if tasks are loaded
+
+    /**
+     * Initializes the app by loading tasks from JSON.
+     * Call this at the start of your application.
+     */
+    init: async function() {
+        try {
+            // Fetch the JSON file
+            const response = await fetch('/tasks.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            this._tasks = await response.json();
+
+            // Optional: Log tasks to verify
+            console.log('Tasks loaded from JSON:', this._tasks);
+
+            this._tasksLoaded = true; // Mark tasks as loaded
+            // Dispatch an event to let components know tasks are ready
+            window.dispatchEvent(new CustomEvent('app-tasks-loaded'));
+
+        } catch (error) {
+            console.error('Failed to load tasks from JSON:', error);
+            // Handle error, e.g., display a message to the user
+            alert('Failed to load tasks, please check your network and try again.');
+        }
+    },
 
     /**
      * Resets the app state.
      */
     reset: function() {
-        // When resetting, set _flags to 0, save to localStorage, and ensure it's a number
         localStorage.setItem(TOKEN, 0);
         this._flags = 0; // Update the in-memory _flags as well
+        console.log('Sensei! All quest progress has been reset!');
     },
 
     /**
@@ -65,22 +88,25 @@ const APP = {
      * @returns {boolean} Whether the flag was stored or not.
      */
     store: function(taskIndex) {
-        // Check if the taskIndex is valid
+        // Ensure tasks are loaded before trying to store
+        if (!this._tasksLoaded) {
+            console.warn('Sensei, tasks are not loaded yet. Cannot store flag.');
+            return false;
+        }
+
         if (taskIndex < 0 || taskIndex >= this._tasks.length) {
             console.warn(`Sensei, invalid task index: ${taskIndex}. Cannot store flag.`);
             return false;
         }
 
-        // Check if the quest is already completed
         if (FLAGS.get(this._flags, taskIndex)) {
-            console.log(`Sensei, Quest ${taskIndex + 1} is already completed!`);
-            return false; // Already completed, no change needed
+            console.log(`Quest ${taskIndex + 1} is already completed!`);
+            return false;
         }
 
-        // Set the bit for the given taskIndex to true
         this._flags = FLAGS.set(this._flags, taskIndex, true);
         localStorage.setItem(TOKEN, this._flags.toString()); // Store as string
-        console.log(`Sensei, Quest ${taskIndex + 1} completed! New flags: ${this._flags}`);
+        console.log(`Quest ${taskIndex + 1} completed! New flags: ${this._flags}`);
         return true;
     },
 };
@@ -142,3 +168,5 @@ async function detect(video, signal) {
 
     return promise; // Return the promise
 }
+
+APP.init();
