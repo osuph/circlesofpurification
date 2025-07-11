@@ -37,9 +37,9 @@ const FLAGS = {
  * The app state.
  */
 const APP = {
-    #state: localStorage.getItem(TOKEN) ?? 0,
+    _state: localStorage.getItem(TOKEN) ?? 0,
 
-    #flags: [
+    _flags: [
         "purification_01",
         "purification_02",
         "purification_03",
@@ -51,26 +51,10 @@ const APP = {
     ],
 
     /**
-     * The app state.
-     * @returns {number}
-     */
-    get state() {
-        return this.#state;
-    }
-
-    /**
-     * The app flags.
-     * @returns {string[]}
-     */
-    get flags() {
-        return this.#flags;
-    }
-
-    /**
      * Resets the app state.
      */
     reset: function() {
-        localStorage.setItem(TOKEN, this.#state = 0);
+        localStorage.setItem(TOKEN, this._state = 0);
     },
 
     /**
@@ -79,13 +63,13 @@ const APP = {
      * @returns {boolean} Whether the flag was stored or not.
      */
     store: function(flag) {
-        const index = this.#flags.indexOf(flag);
+        const index = this._flags.indexOf(flag);
 
         if (flag < 0) {
             return false;
         }
 
-        localStorage.setItem(TOKEN, this.#state = FLAGS.set(this.#state, index, true));
+        localStorage.setItem(TOKEN, this._state = FLAGS.set(this._state, index, true));
         return true;
     },
 };
@@ -97,7 +81,7 @@ const APP = {
  * @returns {string} The detected QR code value.
  */
 function detect(video, signal) {
-    const stream = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const stream = navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
     video.srcObject = stream;
 
     const { promise, resolve, reject } = Promise.withResolvers();
