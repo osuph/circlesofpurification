@@ -1,52 +1,57 @@
+// components/challenge-card.js
 class ChallengeCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
     this.render();
+
+    // Bind event handlers once to ensure 'this' context is always correct
+    this._handleDismissClick = this.dismiss.bind(this);
+    this._handleCompleteClick = this._initiateCompletionFromButton.bind(this);
   }
 
   static get observedAttributes() {
     return ['task-index', 'quest-name', 'quest-desc', 'is-completed'];
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback() {
     this.render();
+    this._attachEventListeners();
   }
 
   connectedCallback() {
-    // Re-render when attributes change, or when first connected
-    this.render();
-
-    // Add event listeners programmatically for dismiss and complete buttons
-    const dismissButton = this.shadowRoot.querySelector('sl-button[variant="neutral"]');
-    if (dismissButton) {
-      dismissButton.addEventListener('click', this.dismiss.bind(this));
-    }
-
-    const completeButton = this.shadowRoot.querySelector('sl-button[variant="primary"]');
-    if (completeButton) {
-      completeButton.addEventListener('click', () => {
-        const taskIndex = this.getAttribute('task-index');
-        this.initiateCompletion(taskIndex);
-      });
-    }
+    this._attachEventListeners();
   }
 
   disconnectedCallback() {
-    // Clean up event listeners to prevent memory leaks
+    // Clean up event listeners to prevent memory leaks when component is removed
     const dismissButton = this.shadowRoot.querySelector('sl-button[variant="neutral"]');
     if (dismissButton) {
-      dismissButton.removeEventListener('click', this.dismiss.bind(this));
+      dismissButton.removeEventListener('click', this._handleDismissClick);
     }
 
     const completeButton = this.shadowRoot.querySelector('sl-button[variant="primary"]');
     if (completeButton) {
-      // Need to remove the specific anonymous function listener, or make it a named function
-      // For simplicity here, if using anonymous, often re-rendering will clear/recreate.
-      // For robust cleanup, convert to a named function:
-      // completeButton.removeEventListener('click', this._boundInitiateCompletion);
-      // (This requires storing this._boundInitiateCompletion in constructor)
+      completeButton.removeEventListener('click', this._handleCompleteClick);
     }
+  }
+
+  _attachEventListeners() {
+    const dismissButton = this.shadowRoot.querySelector('sl-button[variant="neutral"]');
+    if (dismissButton) {
+      dismissButton.addEventListener('click', this._handleDismissClick);
+    }
+
+    const completeButton = this.shadowRoot.querySelector('sl-button[variant="primary"]');
+    if (completeButton) {
+      completeButton.addEventListener('click', this._handleCompleteClick);
+    }
+  }
+
+  // Helper method to get taskIndex from attributes for the complete button
+  _initiateCompletionFromButton() {
+    const taskIndex = this.getAttribute('task-index');
+    this.initiateCompletion(taskIndex);
   }
 
   render() {
@@ -107,8 +112,10 @@ class ChallengeCard extends HTMLElement {
           <h2>Quest Details: ${questName}</h2>
           <p>${questDesc}</p>
           <div class="button-group">
-            <sl-button variant="neutral">Dismiss</sl-button> ${!isCompleted ? `
-              <sl-button variant="primary">Complete Quest</sl-button> ` : `
+            <sl-button variant="neutral">Dismiss</sl-button>
+            ${!isCompleted ? `
+              <sl-button variant="primary">Complete Quest</sl-button>
+            ` : `
               <sl-button variant="success" disabled>
                 <sl-icon name="check" slot="prefix"></sl-icon>
                 Already Completed!
@@ -125,7 +132,8 @@ class ChallengeCard extends HTMLElement {
   }
 
   initiateCompletion(taskIndex) {
-    this.remove();
+    this.remove(); // Dismiss the challenge card
+    // Dispatch event for HomePage to manage showing the QR scanner
     window.dispatchEvent(new CustomEvent('show-qr-scanner', { detail: { taskIndex } }));
   }
 }

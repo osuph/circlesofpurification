@@ -12,7 +12,7 @@ class QrCodeScanner extends HTMLElement {
     return ['target-task-index'];
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name, newValue) {
     if (name === 'target-task-index') {
       this.targetTaskIndex = parseInt(newValue, 10);
       if (this.isConnected) {

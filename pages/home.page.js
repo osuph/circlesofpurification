@@ -1,4 +1,3 @@
-// pages/home.page.js
 class HomePage extends HTMLElement {
   constructor() {
     super();
@@ -11,6 +10,7 @@ class HomePage extends HTMLElement {
     window.addEventListener('quest-completed', this._handleQuestCompleted.bind(this));
     window.addEventListener('scanner-dismissed', this._handleScannerDismissed.bind(this));
     window.addEventListener('popstate', this.render.bind(this));
+    window.addEventListener('show-qr-scanner', this._handleShowQrScanner.bind(this));
   }
 
   disconnectedCallback() {
@@ -18,6 +18,8 @@ class HomePage extends HTMLElement {
     window.removeEventListener('quest-completed', this._handleQuestCompleted.bind(this));
     window.removeEventListener('scanner-dismissed', this._handleScannerDismissed.bind(this));
     window.removeEventListener('popstate', this.render.bind(this));
+    // FIX: Remove listener for the 'show-qr-scanner' event
+    window.removeEventListener('show-qr-scanner', this._handleShowQrScanner.bind(this));
   }
 
   _handleClick(event) {
@@ -32,7 +34,7 @@ class HomePage extends HTMLElement {
     const task = APP._tasks[taskIndex];
     if (!task) return;
 
-    this._clearModals();
+    this._clearModals(); // Clear any existing modals before showing a new challenge card
 
     const challengeCard = document.createElement('challenge-card');
     challengeCard.setAttribute('task-index', taskIndex);
@@ -40,31 +42,48 @@ class HomePage extends HTMLElement {
     challengeCard.setAttribute('quest-desc', task.desc || 'No description provided.');
     challengeCard.setAttribute('is-completed', FLAGS.get(APP._flags, taskIndex));
 
-    this.shadowRoot.appendChild(challengeCard);
+    this.shadowRoot.appendChild(challengeCard); // Append challenge card to home page's shadow DOM
   }
+
+  // FIX: New handler to display the QR scanner
+  _handleShowQrScanner(event) {
+    const { taskIndex } = event.detail;
+    this._clearModals(); // Clear any other modals (like the challenge card) before showing scanner
+
+    const qrScanner = document.createElement('qr-code-scanner');
+    qrScanner.setAttribute('target-task-index', taskIndex);
+    document.body.appendChild(qrScanner); // Append the QR scanner to the document body
+  }
+
 
   _handleQuestCompleted(event) {
     const { taskIndex } = event.detail;
     if (APP.store(taskIndex)) {
-      this.render();
-      this._clearModals();
-
-      const completedTaskName = APP._tasks[taskIndex]?.name || `Quest ${taskIndex + 1}`;
-      alert(`Quest "${completedTaskName}" completed, Sensei! Splendid work!`);
+      this.render(); // Re-render the home page to update stamp status
+      this._clearModals(); // Ensure all modals are cleared
+      // The success modal is now displayed by the qr-code-scanner component itself,
+      // so we don't need an alert() here.
     } else {
         alert("Failed to mark quest as complete. An error occurred, Sensei!");
     }
   }
 
   _handleScannerDismissed() {
-    this._clearModals();
+    this._clearModals(); // Clear modals/scanners if dismissed from within the scanner itself
   }
 
   _clearModals() {
+    // Clear existing challenge card (if any) that might be in HomePage's shadow DOM
     const existingCard = this.shadowRoot.querySelector('challenge-card');
     if (existingCard) existingCard.remove();
-    const existingScanner = this.shadowRoot.querySelector('qr-code-scanner');
+
+    // FIX: Clear existing scanner or success/failure modals that are appended to document.body
+    const existingScanner = document.body.querySelector('qr-code-scanner');
     if (existingScanner) existingScanner.remove();
+    const existingSuccessModal = document.body.querySelector('quest-success-modal');
+    if (existingSuccessModal) existingSuccessModal.remove();
+    const existingFailureModal = document.body.querySelector('quest-failure-modal');
+    if (existingFailureModal) existingFailureModal.remove();
   }
 
   render() {
