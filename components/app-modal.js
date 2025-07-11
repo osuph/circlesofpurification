@@ -1,9 +1,7 @@
-// components/app-modal.js (Revised for clearer rendering & event handling)
 class AppModal extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    // Default values, will be overridden by attributes
     this.title = 'Notification';
     this.message = 'Something happened!';
     this.icon = 'info-circle';
@@ -18,10 +16,7 @@ class AppModal extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
-
-    // Update internal properties. The initial render in connectedCallback
-    // will use these, and subsequent attribute changes for this specific component
-    // are less likely to require a full re-render of the static template.
+    
     switch (name) {
       case 'title': this.title = newValue; break;
       case 'message': this.message = newValue; break;
@@ -29,10 +24,6 @@ class AppModal extends HTMLElement {
       case 'type': this.type = newValue; break;
       case 'auto-dismiss-delay': this.autoDismissDelay = parseInt(newValue, 10); break;
     }
-    // Crucial: Do NOT call this.render() here.
-    // Calling render() repeatedly or before the element is in the DOM
-    // can cause issues with event listeners and element existence.
-    // The initial render is handled by connectedCallback.
   }
 
   connectedCallback() {
