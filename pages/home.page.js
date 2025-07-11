@@ -1,4 +1,5 @@
-// pages/home.page.js
+import { APP, FLAGS, TOKEN } from '../app.js';
+
 class HomePage extends HTMLElement {
   constructor() {
     super();

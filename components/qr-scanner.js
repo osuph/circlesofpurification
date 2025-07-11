@@ -1,4 +1,5 @@
-// components/qr-code-scanner.js
+import { APP, detect } from '../app.js';
+
 class QrCodeScanner extends HTMLElement {
   constructor() {
     super();

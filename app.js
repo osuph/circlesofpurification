@@ -169,4 +169,4 @@ async function detect(video, signal) {
     return promise; // Return the promise
 }
 
-APP.init();
+export { APP, FLAGS, TOKEN, detect };
