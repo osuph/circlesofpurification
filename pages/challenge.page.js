@@ -1,0 +1,3 @@
+class ChallengePage extends HTMLElement {
+    
+}
