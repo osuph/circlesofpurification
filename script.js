@@ -3,7 +3,6 @@ const appRoot = document.getElementById('app-root');
 
 const routes = {
     '/': 'home-page',
-    '/challenge': 'challenge-page',
     '/barcode': 'barcode-test'
 };
 

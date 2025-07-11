@@ -37,17 +37,17 @@ const FLAGS = {
  * The app state.
  */
 const APP = {
-    _state: localStorage.getItem(TOKEN) ?? 0,
+    _flags: localStorage.getItem(TOKEN) ?? 0,
 
-    _flags: [
-        "purification_01",
-        "purification_02",
-        "purification_03",
-        "purification_04",
-        "purification_05",
-        "purification_06",
-        "purification_07",
-        "purification_08",
+    _tasks: [
+        { name: '', desc: '', task: '', flag: 'purification_01' },
+        { name: '', desc: '', task: '', flag: 'purification_02' },
+        { name: '', desc: '', task: '', flag: 'purification_03' },
+        { name: '', desc: '', task: '', flag: 'purification_04' },
+        { name: '', desc: '', task: '', flag: 'purification_05' },
+        { name: '', desc: '', task: '', flag: 'purification_06' },
+        { name: '', desc: '', task: '', flag: 'purification_07' },
+        { name: '', desc: '', task: '', flag: 'purification_08' },
     ],
 
     /**
@@ -69,7 +69,7 @@ const APP = {
             return false;
         }
 
-        localStorage.setItem(TOKEN, this._state = FLAGS.set(this._state, index, true));
+        localStorage.setItem(TOKEN, this._state = FLAGS.set(this._flags, index, true));
         return true;
     },
 };
@@ -102,6 +102,7 @@ async function detect(video, signal) {
                 requestAnimationFrame(scan);
             }
         } catch (err) {
+            stop();
             reject(err);
         }
     };
