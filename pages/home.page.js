@@ -5,6 +5,7 @@ class HomePage extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     // Initial render shows loading state if tasks aren't loaded yet.
     this.render();
+    this._qrScannerInstance = null;
   }
 
   connectedCallback() {
@@ -16,6 +17,8 @@ class HomePage extends HTMLElement {
 
     // Listen for the event that signals APP.tasks are loaded
     window.addEventListener('app-tasks-loaded', this._handleAppTasksLoaded.bind(this));
+    document.body.addEventListener('app-modal-dismissed', this._handleAppModalDismissed.bind(this));
+
 
     // If APP.tasks are already loaded (e.g., component re-connected or very fast load),
     // ensure the page renders with the actual data.
@@ -33,12 +36,25 @@ class HomePage extends HTMLElement {
 
     // Remove the listener when disconnected
     window.removeEventListener('app-tasks-loaded', this._handleAppTasksLoaded.bind(this));
+    document.body.removeEventListener('app-modal-dismissed', this._handleAppModalDismissed.bind(this));
   }
 
   // New handler for when APP tasks are loaded
   _handleAppTasksLoaded() {
     console.log("Tasks are loaded, rendering home page with quests!");
     this.render();
+  }
+
+  _handleAppModalDismissed() {
+      console.log("An AppModal was dismissed.");
+      // If a QR scanner is active and an error modal was dismissed manually,
+      // we might want to ensure the scanner is also dismissed.
+      // This creates a clear flow: user dismisses error modal, then scanner goes away.
+      if (this._qrScannerInstance) {
+          this._qrScannerInstance.dismiss(); // Call dismiss on the scanner itself
+          this._qrScannerInstance = null; // Clear the reference
+      }
+      this._clearModals(); // Clear any other stray modals (though app-modal removes itself)
   }
 
   _handleClick(event) {
@@ -71,42 +87,53 @@ class HomePage extends HTMLElement {
     const { taskIndex } = event.detail;
     this._clearModals();
 
+    // Create and store a reference to the QR scanner
     const qrScanner = document.createElement('qr-code-scanner');
     qrScanner.setAttribute('target-task-index', taskIndex);
     document.body.appendChild(qrScanner);
+    this._qrScannerInstance = qrScanner;
   }
 
   _handleQuestCompleted(event) {
     const { taskIndex } = event.detail;
     if (APP.store(taskIndex)) {
       this.render();
-      this._clearModals();
     } else {
-      alert("Failed to mark quest as complete. An error occurred.");
+      // If storing failed, show an app-modal error
+      const errorModal = document.createElement('app-modal');
+      errorModal.setAttribute('title', 'Completion Error!');
+      errorModal.setAttribute('message', 'Failed to mark quest as complete. An internal error occurred.');
+      errorModal.setAttribute('icon', 'x-circle');
+      errorModal.setAttribute('type', 'error');
+      errorModal.setAttribute('auto-dismiss-delay', '0');
+      document.body.appendChild(errorModal);
     }
   }
 
   _handleScannerDismissed() {
+    console.log("QR Scanner dismissed.");
+    this._qrScannerInstance = null;
     this._clearModals();
   }
 
   _clearModals() {
     const existingCard = this.shadowRoot.querySelector('challenge-card');
     if (existingCard) existingCard.remove();
+
+    // The qr-code-scanner should manage its own removal via its dismiss() method
+    // which is called by the "Cancel Scan" button or after a delayed error.
+    // We clear its reference in _handleScannerDismissed.
+    // However, if we manually clear here, it ensures cleanup.
     const existingScanner = document.body.querySelector('qr-code-scanner');
     if (existingScanner) existingScanner.remove();
-    const existingSuccessModal = document.body.querySelector('quest-success-modal');
-    if (existingSuccessModal) existingSuccessModal.remove();
-    const existingFailureModal = document.body.querySelector('quest-failure-modal');
-    if (existingFailureModal) existingFailureModal.remove();
+
+    const existingAppModals = document.body.querySelectorAll('app-modal');
+    existingAppModals.forEach(modal => modal.remove());
   }
 
   render() {
-    // Only update _flags if APP is defined and _flags exists, otherwise default to 0
-    // This makes it safer during initial load if APP isn't fully ready, though APP.init() should run first.
     APP._flags = parseInt(localStorage.getItem(TOKEN) || '0', 10);
 
-    // Check if tasks are loaded before trying to access them
     const tasksAreLoaded = APP._tasksLoaded;
     const completedCount = tasksAreLoaded ? APP._tasks.filter((_, index) => FLAGS.get(APP._flags, index)).length : 0;
     const totalTasks = tasksAreLoaded ? APP._tasks.length : 0;

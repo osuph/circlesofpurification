@@ -6,25 +6,29 @@ class QrCodeScanner extends HTMLElement {
     this.videoElement = null;
     this.abortController = null;
     this.targetTaskIndex = null;
+    this.errorMessage = '';
   }
 
   static get observedAttributes() {
     return ['target-task-index'];
   }
 
-  attributeChangedCallback(name, newValue) {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'target-task-index') {
       this.targetTaskIndex = parseInt(newValue, 10);
       if (this.isConnected) {
-        this.render();
-        this.startScanner();
+        if (oldValue !== newValue) {
+          this.render();
+        }
       }
     }
   }
 
   connectedCallback() {
+    if (this.targetTaskIndex !== null && !this.videoElement) {
+        this.render();
+    }
     window.addEventListener('show-qr-scanner', this._handleShowScanner.bind(this));
-    this.render();
   }
 
   disconnectedCallback() {
@@ -40,6 +44,9 @@ class QrCodeScanner extends HTMLElement {
   render() {
     const task = APP._tasks[this.targetTaskIndex];
     const questName = task ? (task.name || `Quest ${this.targetTaskIndex + 1}`) : 'Unknown Quest';
+
+    const currentMessage = this.errorMessage || 'Waiting for camera access...';
+    const isErrorMessage = !!this.errorMessage;
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -107,16 +114,25 @@ class QrCodeScanner extends HTMLElement {
         <div id="video-container">
             <video id="scanner-video" playsinline></video>
         </div>
-        <p class="message" id="scanner-message">Waiting for camera access...</p>
-        <sl-button variant="neutral" onclick="this.closest('qr-code-scanner').dismiss()">Cancel Scan</sl-button>
+        <p class="message ${isErrorMessage ? 'error-message' : ''}" id="scanner-message">${currentMessage}</p>
+        <sl-button variant="neutral" id="cancel-button">Cancel Scan</sl-button>
       </div>
     `;
     this.videoElement = this.shadowRoot.getElementById('scanner-video');
-    this.startScanner();
+
+    const cancelButton = this.shadowRoot.getElementById('cancel-button');
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => this.dismiss());
+    }
+
+    if (!this.errorMessage) {
+      this.startScanner();
+    }
   }
 
   async startScanner() {
     this.stopScanner();
+    this.errorMessage = '';
 
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
@@ -134,17 +150,17 @@ class QrCodeScanner extends HTMLElement {
 
     } catch (err) {
       console.error('QR Code Scan Error:', err);
-      if (err.name === 'NotAllowedError') {
-          this.showMessage('Camera access denied. Please allow camera permissions to scan, Sensei!', true);
-          this.showFailureModal('Camera access denied. Please allow permissions.'); // Show failure modal
-      } else if (err.name === 'NotFoundError') {
-          this.showMessage('No camera found on this device. Please check your setup, Sensei!', true);
-          this.showFailureModal('No camera found on this device.'); // Show failure modal
-      } else {
-          this.showMessage(`Error during scan: ${err.message}. Please try again.`, true);
-          this.showFailureModal(`Error: ${err.message}`); // Show failure modal
-      }
-      this.dismiss(); // Dismiss scanner on camera error
+      const userMessage = 'QR code scanner not available due to a camera error. Please try again later, Sensei!';
+
+      this.errorMessage = userMessage;
+      this.showMessage(userMessage, true);
+      const failureModal = document.createElement('app-modal');
+      failureModal.setAttribute('title', 'Scanner Error!');
+      failureModal.setAttribute('message', userMessage);
+      failureModal.setAttribute('icon', 'camera-video-off');
+      failureModal.setAttribute('type', 'error');
+      failureModal.setAttribute('auto-dismiss-delay', '0');
+      document.body.appendChild(failureModal);
     }
   }
 
@@ -152,6 +168,11 @@ class QrCodeScanner extends HTMLElement {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
+    }
+    if (this.videoElement && this.videoElement.srcObject) {
+      const tracks = this.videoElement.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      this.videoElement.srcObject = null;
     }
   }
 
@@ -164,41 +185,58 @@ class QrCodeScanner extends HTMLElement {
   }
 
   handleScanResult(scannedData) {
-    this.stopScanner(); // Stop scanning once a result is found
+    this.stopScanner();
 
     const targetTask = APP._tasks[this.targetTaskIndex];
 
-    if (!targetTask) {
+    // Case 1: Invalid quest data or tasks not loaded
+    if (!APP._tasksLoaded || !targetTask) {
         this.showMessage('Invalid quest data. Please consult the staff, Sensei!', true);
-        this.showFailureModal('Invalid quest data. Please consult the staff!');
-        this.dismiss();
+        // Use AppModal for this failure
+        const failureModal = document.createElement('app-modal');
+        failureModal.setAttribute('title', 'Data Error!');
+        failureModal.setAttribute('message', 'Invalid quest data. Please consult the staff!');
+        failureModal.setAttribute('icon', 'exclamation-triangle');
+        failureModal.setAttribute('type', 'error');
+        failureModal.setAttribute('auto-dismiss-delay', '0'); // Manual dismissal
+        document.body.appendChild(failureModal);
+
+        // Keep scanner visible for a moment, then dismiss it
+        setTimeout(() => this.dismiss(), 3000);
         return;
     }
 
+    // Case 2: QR code matched - success
     if (targetTask.flag === scannedData) {
       this.showMessage('QR code matched! Marking quest complete...', false);
       window.dispatchEvent(new CustomEvent('quest-completed', { detail: { taskIndex: this.targetTaskIndex } }));
-      this.showSuccessModal(); // Show success modal
-      this.dismiss(); // Dismiss scanner immediately after success
-    } else {
-      this.showMessage('QR code mismatch or invalid for this quest. Please try again, Sensei!', true);
-      this.showFailureModal('QR code mismatch or invalid. Please try again!'); // Show failure modal
-      this.dismiss(); // Dismiss scanner after failure
+      // Use AppModal for success
+      const successModal = document.createElement('app-modal');
+      successModal.setAttribute('title', 'Quest Completed!');
+      successModal.setAttribute('message', 'Excellent work! Your efforts are always appreciated!');
+      successModal.setAttribute('icon', 'check-circle');
+      successModal.setAttribute('type', 'success');
+      successModal.setAttribute('auto-dismiss-delay', '3000'); // Auto-dismiss after 3 seconds
+      document.body.appendChild(successModal);
+
+      this.dismiss();
     }
-  }
+    // Case 3: QR code mismatch or invalid
+    else {
+      const failureReason = `QR code mismatch or invalid for "${targetTask.name || `Quest ${this.targetTaskIndex + 1}`}".`;
+      this.showMessage(`${failureReason} Please try again!`, true);
+      // Use AppModal for mismatch failure
+      const failureModal = document.createElement('app-modal');
+      failureModal.setAttribute('title', 'QR Code Mismatch!');
+      failureModal.setAttribute('message', 'QR code invalid for this quest. Please try again!');
+      failureModal.setAttribute('icon', 'x-octagon');
+      failureModal.setAttribute('type', 'error');
+      failureModal.setAttribute('auto-dismiss-delay', '0');
+      document.body.appendChild(failureModal);
 
-  // New method to display success modal
-  showSuccessModal() {
-    const successModal = document.createElement('quest-success-modal');
-    document.body.appendChild(successModal); // Append to body to ensure it's on top
-  }
-
-  // New method to display failure modal
-  showFailureModal(message = 'An unexpected error occurred.') {
-    const failureModal = document.createElement('quest-failure-modal');
-    // You could pass the specific message as an attribute if quest-failure-modal supports it
-    // For now, it uses its internal default message
-    document.body.appendChild(failureModal); // Append to body to ensure it's on top
+      // Keep scanner visible for a moment, then dismiss it
+      setTimeout(() => this.dismiss(), 3000);
+    }
   }
 
   dismiss() {
