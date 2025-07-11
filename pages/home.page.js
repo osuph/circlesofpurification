@@ -172,13 +172,6 @@ class HomePage extends HTMLElement {
             `;
           }).join('')}
         </div>
-
-        <sl-button variant="text" onclick="window.navigate(event, '/barcode')">
-          <sl-icon name="qr-code" slot="prefix"></sl-icon> Test Barcode Scanner
-        </sl-button>
-        <sl-button variant="text" onclick="APP.reset(); this.closest('home-page').render();" style="margin-top: var(--sl-spacing-x-large);">
-            <sl-icon name="arrow-clockwise" slot="prefix"></sl-icon> Reset Progress (Admin)
-        </sl-button>
       </div>
     `;
   }

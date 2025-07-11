@@ -1,70 +1,121 @@
 class BarcodePage extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
-        this.shadowRoot.innerHTML = `
-        <style>
-            body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
-            padding: 20px;
-            }
-        </style>
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.shadowRoot.innerHTML = `
+      <style>
+        .container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--sl-spacing-large);
+          padding: var(--sl-spacing-x-large);
+          font-family: var(--sl-font-sans);
+          background-color: var(--sl-color-neutral-50);
+          min-height: 100vh;
+          box-sizing: border-box;
+        }
+
+        h1 {
+          color: var(--sl-color-primary-600);
+          text-align: center;
+        }
+
+        #video-container {
+          width: 100%;
+          max-width: 500px;
+          aspect-ratio: 1 / 1;
+          background-color: black;
+          border: 2px solid var(--sl-color-primary-500);
+          border-radius: var(--sl-border-radius-medium);
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #scanner-video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        sl-button {
+          width: 100%;
+          max-width: 300px;
+        }
+
+        #value {
+          color: var(--sl-color-neutral-700);
+          font-size: var(--sl-font-size-medium);
+          text-align: center;
+        }
+      </style>
+      <div class="container">
         <h1>Barcode Scanner Test Page</h1>
         <p>This page is for testing barcode scanning functionality.</p>
-        <video id="video" width="360" height="480"></video>
-        <button id="scan">Scan</button>
-        <button id="stop">Stop</button>
+        <div id="video-container">
+          <video id="scanner-video" playsinline></video>
+        </div>
+        <sl-button id="scan" variant="primary">
+          <sl-icon name="camera" slot="prefix"></sl-icon> Start Scan
+        </sl-button>
+        <sl-button id="stop" variant="neutral" disabled>
+          <sl-icon name="stop-circle" slot="prefix"></sl-icon> Stop Scan
+        </sl-button>
         <div id="value"></div>
-        `;
+      </div>
+    `;
 
-        const scan = this.shadowRoot.getElementById("scan");
-        const stop = this.shadowRoot.getElementById("stop");
-        const video = this.shadowRoot.getElementById("video");
-        const value = this.shadowRoot.getElementById("value");
+    const scanButton = this.shadowRoot.getElementById("scan");
+    const stopButton = this.shadowRoot.getElementById("stop");
+    const video = this.shadowRoot.getElementById("scanner-video");
+    const value = this.shadowRoot.getElementById("value");
 
-        let abort = null;
+    let abortController = null;
 
-        const enable = (state) => {
-            stop.disabled = state;
-            scan.disabled = !state;
-        };
+    const toggleButtons = (isScanning) => {
+      stopButton.disabled = !isScanning;
+      scanButton.disabled = isScanning;
+    };
 
-        enable(true);
+    toggleButtons(false);
 
-        scan.addEventListener('click', async () => {
-            abort = new AbortController();
-            abort.signal.addEventListener('abort', () => {
-                enable(true);
-            });
+    scanButton.addEventListener('click', async () => {
+      abortController = new AbortController();
+      abortController.signal.addEventListener('abort', () => {
+        toggleButtons(false);
+      });
 
+      toggleButtons(true);
 
-            enable(false);
+      try {
+        const result = await detect(video, abortController.signal);
+        if (result) {
+          value.textContent = `Result: ${result}`;
+        } else {
+          value.textContent = "No result detected.";
+        }
+      } catch (error) {
+        console.error("Error during scan:", error);
+        value.textContent = "Error during scan. Please try again.";
+      } finally {
+        toggleButtons(false);
+        abortController = null;
+      }
+    });
 
-            const result = await detect(video, abort.signal);
+    stopButton.addEventListener('click', () => {
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+    });
 
-            if (!result) {
-                enable(true);
-                return;
-            }
-
-            value.innerText = `Result: ${result}`;
-
-            enable(true);
-            abort = null;
-        });
-
-        stop.addEventListener('click', async () => {
-            if (abort) {
-                abort.abort();
-                abort = null;
-            }
-        });
-
-        BarcodeDetector.getSupportedFormats()
-            .then(formats => console.log(`Supported formats: ${formats.join(", ")}`));
-    }
+    BarcodeDetector.getSupportedFormats()
+      .then(formats => console.log(`Supported formats: ${formats.join(", ")}`));
+  }
 }
 
 customElements.define('barcode-test', BarcodePage);
