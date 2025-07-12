@@ -1,3 +1,5 @@
+import { detect } from '../app.js';
+
 class BarcodePage extends HTMLElement {
   constructor() {
     super();
