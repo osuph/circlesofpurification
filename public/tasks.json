@@ -1,43 +1,42 @@
 [
   {
-    "name": "The First Spark",
-    "desc": "Locate the ancient glyph that ignites the journey.",
+    "name": "Artist Alley",
+    "desc": "Draw a Sammy and post it on your Instagram story and tag @smashthatblank.",
     "flag": "purification_01"
   },
   {
-    "name": "Echoes of the Past",
-    "desc": "Decipher the whispers from a forgotten era.",
+    "name": "Warhammer",
+    "desc": "Take a picture with a staff member.",
     "flag": "purification_02"
   },
   {
-    "name": "Guardian's Respite",
-    "desc": "Find the sanctuary where the silent protector rests.",
+    "name": "Tito Steef",
+    "desc": "Talk to the stamp master and answer their trivia question.",
     "flag": "purification_03"
   },
   {
-    "name": "Whispering Woods",
-    "desc": "Uncover the secret hidden deep within the verdant forest.",
+    "name": "Maxbeat",
+    "desc": "Finish the tutorial level or any level on easy difficulty.",
     "flag": "purification_04"
   },
   {
-    "name": "Azure Ascent",
-    "desc": "Reach for the skies and touch the cerulean peak.",
+    "name": "Smash Ultimate",
+    "desc": "Like the tournament livestream.",
     "flag": "purification_05"
   },
   {
-    "name": "Crimson Bloom",
-    "desc": "Discover the vibrant flower that defies the barren lands.",
+    "name": "Just Dance",
+    "desc": "Finish any level.",
     "flag": "purification_06"
   },
   {
-    "name": "Starlight Convergence",
-    "desc": "Align the celestial energies under the night sky.",
+    "name": "osu!",
+    "desc": "Finish any level and post a selfie of your score with the hashtag #osuph and tag @smashthatblank.",
     "flag": "purification_07"
   },
   {
-    "name": "Final Purity",
-    "desc": "Achieve ultimate clarity and complete your journey!"
-  ,
+    "name": "???",
+    "desc": "Find the staff member with a Sammy sticker on their ID.",
     "flag": "purification_08"
   }
 ]
