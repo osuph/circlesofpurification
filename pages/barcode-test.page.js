@@ -1,11 +1,14 @@
 import { detect } from '../app.js';
+import '../shoelace-setup.js';
 
 class BarcodePage extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+    // Remove Shadow DOM - render directly to light DOM
+    
+    // Create a wrapper to avoid issues with custom elements
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
       <style>
         .container {
           display: flex;
@@ -70,11 +73,16 @@ class BarcodePage extends HTMLElement {
         <div id="value"></div>
       </div>
     `;
+    
+    // Clear and append the wrapper's contents
+    while (wrapper.firstChild) {
+      this.appendChild(wrapper.firstChild);
+    }
 
-    const scanButton = this.shadowRoot.getElementById("scan");
-    const stopButton = this.shadowRoot.getElementById("stop");
-    const video = this.shadowRoot.getElementById("scanner-video");
-    const value = this.shadowRoot.getElementById("value");
+    const scanButton = this.querySelector("#scan");
+    const stopButton = this.querySelector("#stop");
+    const video = this.querySelector("#scanner-video");
+    const value = this.querySelector("#value");
 
     let abortController = null;
 
@@ -116,8 +124,10 @@ class BarcodePage extends HTMLElement {
       }
     });
 
-    BarcodeDetector.getSupportedFormats()
-      .then(formats => console.log(`Supported formats: ${formats.join(", ")}`));
+    if (typeof BarcodeDetector !== 'undefined') {
+      BarcodeDetector.getSupportedFormats()
+        .then(formats => console.log(`Supported formats: ${formats.join(", ")}`));
+    }
   }
 }
 

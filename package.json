@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.20.1",
+    "barcode-detector": "^3.0.6",
     "canvas-confetti": "^1.9.3",
     "vite": "^7.0.4"
   }

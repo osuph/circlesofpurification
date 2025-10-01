@@ -1,3 +1,6 @@
+// Import barcode detector polyfill
+import 'barcode-detector/polyfill';
+
 /**
  * The key used for storing progress.
  */

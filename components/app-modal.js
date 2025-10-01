@@ -1,13 +1,16 @@
+import '../shoelace-setup.js';
+
 class AppModal extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    // Remove Shadow DOM - render directly to light DOM for proper modal behavior
     this.title = 'Notification';
     this.message = 'Something happened!';
     this.icon = 'info-circle';
     this.type = 'info';
     this.autoDismissDelay = 0;
     this.dismissTimeout = null;
+    this._dismissHandler = this.dismiss.bind(this);
   }
 
   static get observedAttributes() {
@@ -29,13 +32,13 @@ class AppModal extends HTMLElement {
   connectedCallback() {
     // Perform the initial render of the component's internal HTML structure.
     // This method is guaranteed to run when the element is inserted into the DOM.
-    this._renderModalContent(); // Renamed to clearly indicate it renders the content.
+    this._renderModalContent();
 
     // After rendering, now attach event listeners and set timers.
     if (this.autoDismissDelay === 0) {
-      const button = this.shadowRoot.querySelector('.dismiss-button');
+      const button = this.querySelector('.dismiss-button');
       if (button) {
-        button.addEventListener('click', this.dismiss.bind(this));
+        button.addEventListener('click', this._dismissHandler);
       }
     }
 
@@ -52,9 +55,9 @@ class AppModal extends HTMLElement {
       this.dismissTimeout = null;
     }
     if (this.autoDismissDelay === 0) {
-      const button = this.shadowRoot.querySelector('.dismiss-button');
+      const button = this.querySelector('.dismiss-button');
       if (button) {
-        button.removeEventListener('click', this.dismiss.bind(this));
+        button.removeEventListener('click', this._dismissHandler);
       }
     }
   }
@@ -87,8 +90,9 @@ class AppModal extends HTMLElement {
 
     const dismissButtonHTML = this.autoDismissDelay === 0 ? `<sl-button variant="neutral" class="dismiss-button">Dismiss</sl-button>` : '';
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+    // Create a wrapper to avoid issues with custom elements
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
       <style>
         .modal-overlay {
           position: fixed;
@@ -165,10 +169,16 @@ class AppModal extends HTMLElement {
         </sl-card>
       </div>
     `;
+    
+    // Clear and append the wrapper's contents
+    this.innerHTML = '';
+    while (wrapper.firstChild) {
+      this.appendChild(wrapper.firstChild);
+    }
   }
 
   dismiss() {
-    const overlay = this.shadowRoot.querySelector('.modal-overlay');
+    const overlay = this.querySelector('.modal-overlay');
     if (overlay) {
       if (this.dismissTimeout) {
         clearTimeout(this.dismissTimeout);
