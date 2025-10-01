@@ -39,3 +39,11 @@ coverage/
 .idea/
 *.sublime-workspace
 *.sublime-project
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/

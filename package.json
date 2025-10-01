@@ -7,7 +7,12 @@
     "dev": "vite dev",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:headed": "playwright test --headed",
+    "typecheck": "tsc --noEmit"
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +21,11 @@
     "barcode-detector": "^3.0.6",
     "canvas-confetti": "^1.9.3",
     "vite": "^7.0.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@types/node": "^24.6.1",
+    "typescript": "^5.9.3",
+    "vite-plugin-checker": "^0.11.0"
   }
 }
