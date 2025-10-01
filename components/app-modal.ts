@@ -3,23 +3,23 @@ import '../shoelace-setup';
 type ModalType = 'info' | 'success' | 'error' | 'warning';
 
 class AppModal extends HTMLElement {
-  private title: string;
-  private message: string;
-  private icon: string;
-  private type: ModalType;
-  private autoDismissDelay: number;
-  private dismissTimeout: number | null;
+  protected _title: string;
+  protected _message: string;
+  protected _icon: string;
+  protected _type: ModalType;
+  protected _autoDismissDelay: number;
+  protected _dismissTimeout: number | null;
   private readonly _dismissHandler: () => void;
 
   constructor() {
     super();
     // Remove Shadow DOM - render directly to light DOM for proper modal behavior
-    this.title = 'Notification';
-    this.message = 'Something happened!';
-    this.icon = 'info-circle';
-    this.type = 'info';
-    this.autoDismissDelay = 0;
-    this.dismissTimeout = null;
+    this._title = 'Notification';
+    this._message = 'Something happened!';
+    this._icon = 'info-circle';
+    this._type = 'info';
+    this._autoDismissDelay = 0;
+    this._dismissTimeout = null;
     this._dismissHandler = this.dismiss.bind(this);
   }
 
@@ -32,19 +32,19 @@ class AppModal extends HTMLElement {
     
     switch (name) {
       case 'title': 
-        this.title = newValue || 'Notification';
+        this._title = newValue || 'Notification';
         break;
       case 'message': 
-        this.message = newValue || 'Something happened!';
+        this._message = newValue || 'Something happened!';
         break;
       case 'icon': 
-        this.icon = newValue || 'info-circle';
+        this._icon = newValue || 'info-circle';
         break;
       case 'type': 
-        this.type = (newValue as ModalType) || 'info';
+        this._type = (newValue as ModalType) || 'info';
         break;
       case 'auto-dismiss-delay': 
-        this.autoDismissDelay = parseInt(newValue || '0', 10);
+        this._autoDismissDelay = parseInt(newValue || '0', 10);
         break;
     }
   }
@@ -55,26 +55,26 @@ class AppModal extends HTMLElement {
     this._renderModalContent();
 
     // After rendering, now attach event listeners and set timers.
-    if (this.autoDismissDelay === 0) {
+    if (this._autoDismissDelay === 0) {
       const button = this.querySelector('.dismiss-button');
       if (button) {
         button.addEventListener('click', this._dismissHandler);
       }
     }
 
-    if (this.autoDismissDelay > 0) {
-      this.dismissTimeout = window.setTimeout(() => {
+    if (this._autoDismissDelay > 0) {
+      this._dismissTimeout = window.setTimeout(() => {
         this.dismiss();
-      }, this.autoDismissDelay);
+      }, this._autoDismissDelay);
     }
   }
 
   disconnectedCallback(): void {
-    if (this.dismissTimeout) {
-      clearTimeout(this.dismissTimeout);
-      this.dismissTimeout = null;
+    if (this._dismissTimeout) {
+      clearTimeout(this._dismissTimeout);
+      this._dismissTimeout = null;
     }
-    if (this.autoDismissDelay === 0) {
+    if (this._autoDismissDelay === 0) {
       const button = this.querySelector('.dismiss-button');
       if (button) {
         button.removeEventListener('click', this._dismissHandler);
@@ -88,7 +88,7 @@ class AppModal extends HTMLElement {
     let borderColor: string;
     let titleColor: string;
     
-    switch (this.type) {
+    switch (this._type) {
       case 'success':
         iconColor = 'var(--sl-color-success-500)';
         borderColor = 'var(--sl-color-success-600)';
@@ -111,7 +111,7 @@ class AppModal extends HTMLElement {
         break;
     }
 
-    const dismissButtonHTML = this.autoDismissDelay === 0 ? `<sl-button variant="neutral" class="dismiss-button">Dismiss</sl-button>` : '';
+    const dismissButtonHTML = this._autoDismissDelay === 0 ? `<sl-button variant="neutral" class="dismiss-button">Dismiss</sl-button>` : '';
 
     // Create a wrapper to avoid issues with custom elements
     const wrapper = document.createElement('div');
@@ -178,16 +178,16 @@ class AppModal extends HTMLElement {
         p {
           color: var(--sl-color-neutral-700);
           font-size: var(--sl-font-size-medium);
-          margin-bottom: ${this.autoDismissDelay === 0 ? 'var(--sl-spacing-large)' : '0'};
+          margin-bottom: ${this._autoDismissDelay === 0 ? 'var(--sl-spacing-large)' : '0'};
           white-space: pre-wrap; /* Preserve line breaks from message */
           word-break: break-word; /* Ensure long words break */
         }
       </style>
       <div class="modal-overlay">
         <sl-card>
-          <sl-icon name="${this.icon}"></sl-icon>
-          <h2>${this.title}</h2>
-          <p>${this.message}</p>
+          <sl-icon name="${this._icon}"></sl-icon>
+          <h2>${this._title}</h2>
+          <p>${this._message}</p>
           ${dismissButtonHTML}
         </sl-card>
       </div>
@@ -203,9 +203,9 @@ class AppModal extends HTMLElement {
   dismiss(): void {
     const overlay = this.querySelector('.modal-overlay');
     if (overlay) {
-      if (this.dismissTimeout) {
-        clearTimeout(this.dismissTimeout);
-        this.dismissTimeout = null;
+      if (this._dismissTimeout) {
+        clearTimeout(this._dismissTimeout);
+        this._dismissTimeout = null;
       }
 
       (overlay as HTMLElement).style.animation = 'fadeOut 0.3s forwards';
