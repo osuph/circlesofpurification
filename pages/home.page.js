@@ -1,25 +1,36 @@
 import { APP, FLAGS, TOKEN } from '../app.js';
+import '../shoelace-setup.js';
 
 class HomePage extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    // Initial render shows loading state if tasks aren't loaded yet.
-    this.render();
+    // Remove Shadow DOM - render directly to light DOM
+    // Don't render in constructor for pages - wait for connectedCallback
     this._qrScannerInstance = null;
+    
+    // Bind event handlers once to avoid creating new function instances
+    this._handleClick = this._handleClickEvent.bind(this);
+    this._handleQuestCompleted = this._handleQuestCompletedEvent.bind(this);
+    this._handleScannerDismissed = this._handleScannerDismissedEvent.bind(this);
+    this._handleShowQrScanner = this._handleShowQrScannerEvent.bind(this);
+    this._handlePopState = this.render.bind(this);
+    this._handleAppTasksLoaded = this._handleAppTasksLoadedEvent.bind(this);
+    this._handleAppModalDismissed = this._handleAppModalDismissedEvent.bind(this);
   }
 
   connectedCallback() {
-    this.shadowRoot.addEventListener('click', this._handleClick.bind(this));
-    window.addEventListener('quest-completed', this._handleQuestCompleted.bind(this));
-    window.addEventListener('scanner-dismissed', this._handleScannerDismissed.bind(this));
-    window.addEventListener('show-qr-scanner', this._handleShowQrScanner.bind(this));
-    window.addEventListener('popstate', this.render.bind(this));
+    // Initial render shows loading state if tasks aren't loaded yet.
+    this.render();
+    
+    this.addEventListener('click', this._handleClick);
+    window.addEventListener('quest-completed', this._handleQuestCompleted);
+    window.addEventListener('scanner-dismissed', this._handleScannerDismissed);
+    window.addEventListener('show-qr-scanner', this._handleShowQrScanner);
+    window.addEventListener('popstate', this._handlePopState);
 
     // Listen for the event that signals APP.tasks are loaded
-    window.addEventListener('app-tasks-loaded', this._handleAppTasksLoaded.bind(this));
-    document.body.addEventListener('app-modal-dismissed', this._handleAppModalDismissed.bind(this));
-
+    window.addEventListener('app-tasks-loaded', this._handleAppTasksLoaded);
+    document.body.addEventListener('app-modal-dismissed', this._handleAppModalDismissed);
 
     // If APP.tasks are already loaded (e.g., component re-connected or very fast load),
     // ensure the page renders with the actual data.
@@ -29,24 +40,24 @@ class HomePage extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.shadowRoot.removeEventListener('click', this._handleClick.bind(this));
-    window.removeEventListener('quest-completed', this._handleQuestCompleted.bind(this));
-    window.removeEventListener('scanner-dismissed', this._handleScannerDismissed.bind(this));
-    window.removeEventListener('show-qr-scanner', this._handleShowQrScanner.bind(this));
-    window.removeEventListener('popstate', this.render.bind(this));
+    this.removeEventListener('click', this._handleClick);
+    window.removeEventListener('quest-completed', this._handleQuestCompleted);
+    window.removeEventListener('scanner-dismissed', this._handleScannerDismissed);
+    window.removeEventListener('show-qr-scanner', this._handleShowQrScanner);
+    window.removeEventListener('popstate', this._handlePopState);
 
     // Remove the listener when disconnected
-    window.removeEventListener('app-tasks-loaded', this._handleAppTasksLoaded.bind(this));
-    document.body.removeEventListener('app-modal-dismissed', this._handleAppModalDismissed.bind(this));
+    window.removeEventListener('app-tasks-loaded', this._handleAppTasksLoaded);
+    document.body.removeEventListener('app-modal-dismissed', this._handleAppModalDismissed);
   }
 
   // New handler for when APP tasks are loaded
-  _handleAppTasksLoaded() {
+  _handleAppTasksLoadedEvent() {
     console.log("Tasks are loaded, rendering home page with quests!");
     this.render();
   }
 
-  _handleAppModalDismissed() {
+  _handleAppModalDismissedEvent() {
       console.log("An AppModal was dismissed.");
       // If a QR scanner is active and an error modal was dismissed manually,
       // we might want to ensure the scanner is also dismissed.
@@ -58,7 +69,7 @@ class HomePage extends HTMLElement {
       this._clearModals(); // Clear any other stray modals (though app-modal removes itself)
   }
 
-  _handleClick(event) {
+  _handleClickEvent(event) {
     const stampItem = event.target.closest('.stamp-item');
     if (stampItem) {
       const taskIndex = parseInt(stampItem.dataset.taskIndex, 10);
@@ -81,10 +92,10 @@ class HomePage extends HTMLElement {
     challengeCard.setAttribute('quest-desc', task.desc || 'No description provided.');
     challengeCard.setAttribute('is-completed', FLAGS.get(APP._flags, taskIndex));
 
-    this.shadowRoot.appendChild(challengeCard);
+    this.appendChild(challengeCard);
   }
 
-  _handleShowQrScanner(event) {
+  _handleShowQrScannerEvent(event) {
     const { taskIndex } = event.detail;
     this._clearModals();
 
@@ -95,7 +106,7 @@ class HomePage extends HTMLElement {
     this._qrScannerInstance = qrScanner;
   }
 
-  _handleQuestCompleted(event) {
+  _handleQuestCompletedEvent(event) {
     const { taskIndex } = event.detail;
     if (APP.store(taskIndex)) {
       this.render();
@@ -111,14 +122,14 @@ class HomePage extends HTMLElement {
     }
   }
 
-  _handleScannerDismissed() {
+  _handleScannerDismissedEvent() {
     console.log("QR Scanner dismissed.");
     this._qrScannerInstance = null;
     this._clearModals();
   }
 
   _clearModals() {
-    const existingCard = this.shadowRoot.querySelector('challenge-card');
+    const existingCard = this.querySelector('challenge-card');
     if (existingCard) existingCard.remove();
 
     // The qr-code-scanner should manage its own removal via its dismiss() method
@@ -139,15 +150,16 @@ class HomePage extends HTMLElement {
     const completedCount = tasksAreLoaded ? APP._tasks.filter((_, index) => FLAGS.get(APP._flags, index)).length : 0;
     const totalTasks = tasksAreLoaded ? APP._tasks.length : 0;
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+    // Create a wrapper to avoid issues with custom elements
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
       <style>
         :host {
           display: block;
           min-height: 100vh;
           background-color: var(--sl-color-neutral-50);
           box-sizing: border-box;
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         .container {
@@ -175,10 +187,11 @@ class HomePage extends HTMLElement {
 
         .stamp-card-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
           gap: var(--sl-spacing-medium);
           width: 100%;
           margin-bottom: var(--sl-spacing-x-large);
+          justify-content: center;
         }
 
         .stamp-item {
@@ -255,6 +268,12 @@ class HomePage extends HTMLElement {
         `}
       </div>
     `;
+    
+    // Clear and append the wrapper's contents
+    this.innerHTML = '';
+    while (wrapper.firstChild) {
+      this.appendChild(wrapper.firstChild);
+    }
   }
 }
 

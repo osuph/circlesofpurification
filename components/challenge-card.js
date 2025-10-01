@@ -1,10 +1,12 @@
 // components/challenge-card.js
+import '../shoelace-setup.js';
+
 class ChallengeCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.render();
-
+    // Remove Shadow DOM - render directly to light DOM for proper modal behavior
+    // Don't render in constructor - wait for connectedCallback
+    
     // Bind event handlers once to ensure 'this' context is always correct
     this._handleDismissClick = this.dismiss.bind(this);
     this._handleCompleteClick = this._initiateCompletionFromButton.bind(this);
@@ -15,34 +17,39 @@ class ChallengeCard extends HTMLElement {
   }
 
   attributeChangedCallback() {
-    this.render();
-    this._attachEventListeners();
+    // Only render if already connected to DOM
+    if (this.isConnected) {
+      this.render();
+      this._attachEventListeners();
+    }
   }
 
   connectedCallback() {
+    // Render when connected to DOM
+    this.render();
     this._attachEventListeners();
   }
 
   disconnectedCallback() {
     // Clean up event listeners to prevent memory leaks when component is removed
-    const dismissButton = this.shadowRoot.querySelector('sl-button[variant="neutral"]');
+    const dismissButton = this.querySelector('sl-button[variant="neutral"]');
     if (dismissButton) {
       dismissButton.removeEventListener('click', this._handleDismissClick);
     }
 
-    const completeButton = this.shadowRoot.querySelector('sl-button[variant="primary"]');
+    const completeButton = this.querySelector('sl-button[variant="primary"]');
     if (completeButton) {
       completeButton.removeEventListener('click', this._handleCompleteClick);
     }
   }
 
   _attachEventListeners() {
-    const dismissButton = this.shadowRoot.querySelector('sl-button[variant="neutral"]');
+    const dismissButton = this.querySelector('sl-button[variant="neutral"]');
     if (dismissButton) {
       dismissButton.addEventListener('click', this._handleDismissClick);
     }
 
-    const completeButton = this.shadowRoot.querySelector('sl-button[variant="primary"]');
+    const completeButton = this.querySelector('sl-button[variant="primary"]');
     if (completeButton) {
       completeButton.addEventListener('click', this._handleCompleteClick);
     }
@@ -60,8 +67,9 @@ class ChallengeCard extends HTMLElement {
     const questDesc = this.getAttribute('quest-desc') || 'No description provided for this quest.';
     const isCompleted = this.getAttribute('is-completed') === 'true';
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+    // Create a wrapper to avoid issues with custom elements
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
       <style>
         .modal-overlay {
           position: fixed;
@@ -74,7 +82,7 @@ class ChallengeCard extends HTMLElement {
           justify-content: center;
           align-items: center;
           z-index: 1000;
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         sl-card {
@@ -126,6 +134,12 @@ class ChallengeCard extends HTMLElement {
         </sl-card>
       </div>
     `;
+    
+    // Clear and append the wrapper's contents
+    this.innerHTML = '';
+    while (wrapper.firstChild) {
+      this.appendChild(wrapper.firstChild);
+    }
   }
 
   dismiss() {

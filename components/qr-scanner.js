@@ -1,14 +1,16 @@
 import { APP, detect } from '../app.js';
 import confetti from 'canvas-confetti';
+import '../shoelace-setup.js';
 
 class QrCodeScanner extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    // Remove Shadow DOM - render directly to light DOM for proper modal behavior
     this.videoElement = null;
     this.abortController = null;
     this.targetTaskIndex = null;
     this.errorMessage = '';
+    this._handleShowScanner = this._handleShowScannerEvent.bind(this);
   }
 
   static get observedAttributes() {
@@ -30,15 +32,15 @@ class QrCodeScanner extends HTMLElement {
     if (this.targetTaskIndex !== null && !this.videoElement) {
         this.render();
     }
-    window.addEventListener('show-qr-scanner', this._handleShowScanner.bind(this));
+    window.addEventListener('show-qr-scanner', this._handleShowScanner);
   }
 
   disconnectedCallback() {
     this.stopScanner();
-    window.removeEventListener('show-qr-scanner', this._handleShowScanner.bind(this));
+    window.removeEventListener('show-qr-scanner', this._handleShowScanner);
   }
 
-  _handleShowScanner(event) {
+  _handleShowScannerEvent(event) {
       const { taskIndex } = event.detail;
       this.setAttribute('target-task-index', taskIndex);
   }
@@ -50,8 +52,9 @@ class QrCodeScanner extends HTMLElement {
     const currentMessage = this.errorMessage || 'Waiting for camera access...';
     const isErrorMessage = !!this.errorMessage;
 
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
+    // Create a wrapper to avoid issues with custom elements
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
       <style>
         .scanner-overlay {
           position: fixed;
@@ -67,7 +70,7 @@ class QrCodeScanner extends HTMLElement {
           z-index: 2000;
           color: var(--sl-color-neutral-100);
           gap: var(--sl-spacing-large);
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         h2 {
@@ -121,9 +124,16 @@ class QrCodeScanner extends HTMLElement {
         <sl-button variant="neutral" id="cancel-button">Cancel Scan</sl-button>
       </div>
     `;
-    this.videoElement = this.shadowRoot.getElementById('scanner-video');
+    
+    // Clear and append the wrapper's contents
+    this.innerHTML = '';
+    while (wrapper.firstChild) {
+      this.appendChild(wrapper.firstChild);
+    }
+    
+    this.videoElement = this.querySelector('#scanner-video');
 
-    const cancelButton = this.shadowRoot.getElementById('cancel-button');
+    const cancelButton = this.querySelector('#cancel-button');
     if (cancelButton) {
       cancelButton.addEventListener('click', () => this.dismiss());
     }
@@ -180,7 +190,7 @@ class QrCodeScanner extends HTMLElement {
   }
 
   showMessage(message, isError = false) {
-    const msgElement = this.shadowRoot.getElementById('scanner-message');
+    const msgElement = this.querySelector('#scanner-message');
     if (msgElement) {
       msgElement.textContent = message;
       msgElement.classList.toggle('error-message', isError);
