@@ -187,10 +187,11 @@ class HomePage extends HTMLElement {
 
         .stamp-card-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
           gap: var(--sl-spacing-medium);
           width: 100%;
           margin-bottom: var(--sl-spacing-x-large);
+          justify-content: center;
         }
 
         .stamp-item {
