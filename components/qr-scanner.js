@@ -1,4 +1,5 @@
 import { APP, detect } from '../app.js';
+import confetti from 'canvas-confetti';
 
 class QrCodeScanner extends HTMLElement {
   constructor() {
@@ -50,6 +51,7 @@ class QrCodeScanner extends HTMLElement {
     const isErrorMessage = !!this.errorMessage;
 
     this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
       <style>
         .scanner-overlay {
           position: fixed;
@@ -211,6 +213,10 @@ class QrCodeScanner extends HTMLElement {
     if (targetTask.flag === scannedData) {
       this.showMessage('QR code matched! Marking quest complete...', false);
       window.dispatchEvent(new CustomEvent('quest-completed', { detail: { taskIndex: this.targetTaskIndex } }));
+
+      // Trigger confetti animation
+      this.triggerConfetti();
+
       // Use AppModal for success
       const successModal = document.createElement('app-modal');
       successModal.setAttribute('title', 'Quest Completed!');
@@ -238,6 +244,48 @@ class QrCodeScanner extends HTMLElement {
       // Keep scanner visible for a moment, then dismiss it
       setTimeout(() => this.dismiss(), 3000);
     }
+  }
+
+  triggerConfetti() {
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 }
+    };
+
+    function fire(particleRatio, opts) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio)
+      });
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+    });
+
+    fire(0.2, {
+      spread: 60,
+    });
+
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+    });
   }
 
   dismiss() {

@@ -140,6 +140,7 @@ class HomePage extends HTMLElement {
     const totalTasks = tasksAreLoaded ? APP._tasks.length : 0;
 
     this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
       <style>
         :host {
           display: block;

@@ -61,6 +61,7 @@ class ChallengeCard extends HTMLElement {
     const isCompleted = this.getAttribute('is-completed') === 'true';
 
     this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
       <style>
         .modal-overlay {
           position: fixed;

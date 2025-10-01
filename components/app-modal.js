@@ -88,6 +88,7 @@ class AppModal extends HTMLElement {
     const dismissButtonHTML = this.autoDismissDelay === 0 ? `<sl-button variant="neutral" class="dismiss-button">Dismiss</sl-button>` : '';
 
     this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css" />
       <style>
         .modal-overlay {
           position: fixed;
