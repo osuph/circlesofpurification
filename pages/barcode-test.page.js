@@ -16,7 +16,7 @@ class BarcodePage extends HTMLElement {
           align-items: center;
           gap: var(--sl-spacing-large);
           padding: var(--sl-spacing-x-large);
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           background-color: var(--sl-color-neutral-50);
           min-height: 100vh;
           box-sizing: border-box;

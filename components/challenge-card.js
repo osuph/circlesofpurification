@@ -82,7 +82,7 @@ class ChallengeCard extends HTMLElement {
           justify-content: center;
           align-items: center;
           z-index: 1000;
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         sl-card {

@@ -70,7 +70,7 @@ class QrCodeScanner extends HTMLElement {
           z-index: 2000;
           color: var(--sl-color-neutral-100);
           gap: var(--sl-spacing-large);
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         h2 {

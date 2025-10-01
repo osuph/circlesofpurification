@@ -105,7 +105,7 @@ class AppModal extends HTMLElement {
           justify-content: center;
           align-items: center;
           z-index: 9999; /* Very high z-index to be on top */
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           opacity: 0;
           animation: fadeIn 0.3s forwards;
           backdrop-filter: blur(3px); /* Add a subtle blur to the background */

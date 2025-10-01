@@ -159,7 +159,7 @@ class HomePage extends HTMLElement {
           min-height: 100vh;
           background-color: var(--sl-color-neutral-50);
           box-sizing: border-box;
-          font-family: var(--sl-font-sans);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         .container {
