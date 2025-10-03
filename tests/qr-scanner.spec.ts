@@ -12,8 +12,8 @@ test.describe('QR Scanner', () => {
     // Verify page loaded
     await expect(page.locator('h1')).toContainText('Barcode Scanner Test Page');
 
-    // Verify scan button is visible
-    const scanButton = page.locator('#scan');
+    // Verify scan button is visible using role and name
+    const scanButton = page.getByRole('button', { name: /start scan/i });
     await expect(scanButton).toBeVisible();
     await expect(scanButton).toBeEnabled();
 
@@ -46,8 +46,11 @@ test.describe('QR Scanner', () => {
     const firstQuest = page.locator('.stamp-item').first();
     await firstQuest.click();
 
-    // Click "Complete Quest" button
-    const completeButton = page.locator('sl-button[variant="primary"]');
+    // Wait for challenge card to appear
+    await page.waitForSelector('challenge-card', { timeout: 5000 });
+
+    // Click "Complete Quest" button - use text content instead of variant attribute
+    const completeButton = page.getByRole('button', { name: /complete quest/i });
     await completeButton.click();
 
     // Verify QR scanner is shown
@@ -57,8 +60,8 @@ test.describe('QR Scanner', () => {
     // Verify correct quest name is shown
     await expect(page.locator('.scanner-overlay h2')).toContainText(firstTask.name);
 
-    // Cancel the scan
-    const cancelButton = page.locator('#cancel-button');
+    // Cancel the scan - use button role and text
+    const cancelButton = page.getByRole('button', { name: /cancel/i });
     await cancelButton.click();
 
     // Verify scanner is closed
